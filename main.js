@@ -22,6 +22,7 @@ function downloadOBJ(recording, imageIndex) {
   a.href = URL.createObjectURL(file);
   a.download = `recording-${recordingStartTime}-${imageIndex}.obj`;
   a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 function loadRandomImage() {
