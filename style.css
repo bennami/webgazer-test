@@ -1,0 +1,33 @@
+body {
+  margin: 0;
+  overflow: hidden;
+}
+
+#image-container {
+  width: 100vw;
+  height: 100vh;
+  background-color: black;
+}
+
+#image-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+#webgazerVideoContainer {
+  display: none !important;
+  left: unset !important;
+  right: 0 !important;
+  top: unset !important;
+  bottom: 0 !important;
+}
+
+#gaze-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+}
