@@ -68,13 +68,16 @@ webgazer
       recording.push({ x, y, time: (Date.now() - recordingStartTime) / 1000 });
     }
     ctx.globalCompositeOperation = "lighter";
+    const gradient = ctx.createRadialGradient(x, y, 0, x, y, 50);
+    gradient.addColorStop(0, "rgba(255, 255, 255, 0.03)");
+    gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
 
-    ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+    ctx.fillStyle = gradient; // "rgba(255, 255, 255, 0.01)";
     ctx.lineWidth = 5;
     if (prevX && prevY) {
       ctx.beginPath();
       ctx.moveTo(prevX, prevY);
-      ctx.arc(x, y, 5, 0, 2 * Math.PI);
+      ctx.arc(x, y, 50, 0, 2 * Math.PI);
       //   ctx.lineTo(x, y);
       ctx.fill();
     }
