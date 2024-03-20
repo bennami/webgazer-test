@@ -67,13 +67,16 @@ webgazer
     if (recording !== null) {
       recording.push({ x, y, time: (Date.now() - recordingStartTime) / 1000 });
     }
-    ctx.strokeStyle = "white";
-    ctx.lineWidth = 2;
+    ctx.globalCompositeOperation = "lighter";
+
+    ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+    ctx.lineWidth = 5;
     if (prevX && prevY) {
       ctx.beginPath();
       ctx.moveTo(prevX, prevY);
-      ctx.lineTo(x, y);
-      ctx.stroke();
+      ctx.arc(x, y, 5, 0, 2 * Math.PI);
+      //   ctx.lineTo(x, y);
+      ctx.fill();
     }
     prevX = x;
     prevY = y;
