@@ -27,7 +27,7 @@ function downloadOBJ(recording, imageIndex) {
 }
 
 // Function to load a random image
-function loadRandomImage(callback) {
+function loadRandomImage() {
   const TOTAL_IMAGE_COUNT = 12;
   const imageIndex = Math.ceil(Math.random() * TOTAL_IMAGE_COUNT);
   const filename = `images/image-${imageIndex}.jpg`;
@@ -38,7 +38,7 @@ function loadRandomImage(callback) {
     imageContainer.innerHTML = "";
     imageContainer.appendChild(img);
     initializeBlackCanvas();
-    if (callback) callback(img, imageIndex);
+   
   };
   img.onerror = () => {
     console.error("Failed to load image");
@@ -86,9 +86,7 @@ window.addEventListener("keypress", (event) => {
     }
     saveCanvasAsPNG(blackCanvas, `black-canvas-${Date.now()}.png`);
     
-    loadRandomImage((imgElement, imageIndex) => {
-      initializeBlackCanvas(); // Initialize the black canvas after loading the new image
-    });
+    loadRandomImage()
   }
 });
 
