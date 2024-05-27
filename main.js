@@ -81,14 +81,11 @@ window.addEventListener("keypress", (event) => {
   console.log(event.key);
   if (event.key === " ") {
     loadRandomImage((imgElement, imageIndex) => {
-      // let blackCanvas = document.getElementById('blackCanvas');
    
-      //saveCanvasAsPNG(blackCanvas, `black-canvas-${imageIndex}-${Date.now()}.png`);
       saveImageAsPNG(imgElement, `random-image-${imageIndex}-${Date.now()}.png`);
     });
-   let png = ReImg.fromCanvas(document.getElementById('blackCanvas')).downloadPng();
-      ReImg.fromCanvas(blackCanvas).downloadPng();
 
+    saveCanvasAsPNG(blackCanvas, `black-canvas-${Date.now()}.png`);
   }
   initializeBlackCanvas();
 });
