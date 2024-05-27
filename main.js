@@ -2,7 +2,7 @@ let recording = null;
 let recordingStartTime = null;
 let recordingImageIndex = null;
 
-let prevX, prevY;
+let prevX = null, prevY = null;
 
 //this function records some data that you download
 function downloadOBJ(recording, imageIndex) {
@@ -25,36 +25,23 @@ function downloadOBJ(recording, imageIndex) {
   a.click();
   URL.revokeObjectURL(a.href);
 }
-
+let pic;
 function loadRandomImage() {
-  // const TOTAL_IMAGE_COUNT = 12;
-  // const imageIndex = Math.ceil(Math.random() * TOTAL_IMAGE_COUNT);
-  // const filename = `images/image-${imageIndex}.jpg`;
-  // const img = document.createElement("img");
-  // img.src = filename;
-  // const imageContainer = document.querySelector("#image-container");
-  // imageContainer.innerHTML = "";
-  // imageContainer.appendChild(img);
-
+  const TOTAL_IMAGE_COUNT = 12;
+  const imageIndex = Math.ceil(Math.random() * TOTAL_IMAGE_COUNT);
+  const filename = `images/image-${imageIndex}.jpg`;
+  const img = document.createElement("img");
+  img.src = filename;
+  const imageContainer = document.querySelector("#image-container");
+  imageContainer.innerHTML = "";
+  imageContainer.appendChild(img);
+  pic = document.querySelector('#image-container img')
+  console.log(pic);
 
   //dowload png from canvas on tab
-  var png = ReImg.fromCanvas(document.getElementById('livecam-canvas')).downloadPng();
-  var pngblack = ReImg.fromCanvas(document.getElementById('blackCanvas')).downloadPng();
 
-/*
-Here we should find a way to merge two canvases in one
-
-live cam with black
-
-photo with black
-
-blur.
-
-ideally we can set up some buttons
-on the page so people can choose what they want perhaps?
-*/
-
-
+  //var png = ReImg.fromSvg(pic).downloadPng();
+  //var pngblack = ReImg.fromCanvas(document.getElementById('blackCanvas')).downloadPng();
 
   /*
   here is where you download the object, you can uncomment this when needed.
@@ -75,9 +62,31 @@ on the page so people can choose what they want perhaps?
 function initializeBlackCanvas() {
   blackCanvas.width = window.innerWidth;
   blackCanvas.height = window.innerHeight;
-  blackCtx.clearRect(0, 0, blackCanvas.width, blackCanvas.height); // Clear any existing content
-  // blackCtx.fillStyle = "black";
-  blackCtx.fillRect(0, 0, blackCanvas.width, blackCanvas.height);
+  blackCtx.clearRect(0, 0, blackCanvas.width, blackCanvas.height);
+}
+
+
+
+
+// Function to save the canvas as a PNG
+function saveCanvasAsPNG(canvas, filename) {
+  const link = document.createElement('a');
+  link.href = canvas.toDataURL('image/png');
+  link.download = filename;
+  link.click();
+}
+
+// Function to save the image element as a PNG
+function saveImageAsPNG(imgElement, filename) {
+  const imgCanvas = document.createElement('canvas');
+  const imgCtx = imgCanvas.getContext('2d');
+  imgCanvas.width = imgElement.width;
+  imgCanvas.height = imgElement.height;
+  imgCtx.drawImage(imgElement, 0, 0);
+  const link = document.createElement('a');
+  link.href = imgCanvas.toDataURL('image/png');
+  link.download = filename;
+  link.click();
 }
 
 //event listener for keypress (when you press spacebar i guess?)
@@ -87,9 +96,11 @@ window.addEventListener("keypress", (event) => {
     loadRandomImage();
   }
   initializeBlackCanvas();
+
+  saveImageAsPNG(pic, "image")
 });
 
-//here we create the canvas where our mages are places..
+//here we create the canvas where our images are placed..
 const gazeCanvas = document.getElementById("gaze-canvas");
 const ctx = gazeCanvas.getContext("2d");
 gazeCanvas.width = window.innerWidth;
@@ -111,7 +122,15 @@ webgazer
       recording.push({ x, y, time: (Date.now() - recordingStartTime) / 1000 });
     }
 
-    smoothErase(x, y);
+    if (prevX !== null && prevY !== null) {
+      interpolateErase(prevX, prevY, x, y);
+    } else {
+      smoothBrush(x, y);
+    }
+
+    prevX = x;
+    prevY = y;
+
   })
   .begin();
 
@@ -119,29 +138,39 @@ webgazer
   
 
 //this is the part where we create the erase function
-const eraseRadius = 30; // Adjust radius for softer effect
+const brushRadius = 30; // Adjust radius for softer effect
 
-function smoothErase(x, y) {
+function interpolateErase(x1, y1, x2, y2) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+  const steps = Math.ceil(distance / brushRadius);
+
+  for (let i = 0; i < steps; i++) {
+    const x = x1 + (dx * i) / steps;
+    const y = y1 + (dy * i) / steps;
+    smoothBrush(x, y);
+  }
+}
+
+function smoothBrush(x, y) {
   // Erase a circular area with a gradient - destination-out  - source-over
-  blackCtx.globalCompositeOperation = "lighter";
-  const gradient = blackCtx.createRadialGradient(x, y, 0, x, y, 50);
+  blackCtx.globalCompositeOperation = "source-over";
+  const gradient = blackCtx.createRadialGradient(x, y, 0, x, y, brushRadius);
 
-  gradient.addColorStop(0, "rgba(255, 255, 255, 0.03)"); // Center is fully black
-  gradient.addColorStop(1, "rgba(255, 255, 255, 0)"); // Edge is fully erased
+  gradient.addColorStop(0, "rgba(0, 0, 0, 0.3)"); 
+  gradient.addColorStop(1, "rgba(0, 0, 0, 0)"); 
   blackCtx.fillStyle = gradient;
   blackCtx.beginPath();
-  blackCtx.arc(x, y, eraseRadius, 0, 2 * Math.PI);
+  blackCtx.arc(x, y, brushRadius, 0, 2 * Math.PI);
   blackCtx.fill();
 }
 
-
-// livecam 
-
+/*
+// livecam on canvas
 console.clear();
-
 ;(function(){
-
-  
+ 
 navigator.getUserMedia  = navigator.getUserMedia ||
                           navigator.webkitGetUserMedia ||
                           navigator.mozGetUserMedia ||
@@ -215,6 +244,4 @@ if ( !navigator.getUserMedia ) { return false; }
   
   
 })()
-
-
-//save canvas
+*/
