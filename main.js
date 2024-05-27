@@ -4,7 +4,7 @@ let recordingImageIndex = null;
 
 let prevX = null, prevY = null;
 
-//this function records some data that you download
+// Function to download the recorded data as an OBJ file
 function downloadOBJ(recording, imageIndex) {
   let obj = ``;
   for (let i = 0; i < recording.length; i++) {
@@ -25,82 +25,75 @@ function downloadOBJ(recording, imageIndex) {
   a.click();
   URL.revokeObjectURL(a.href);
 }
-let pic;
-function loadRandomImage() {
+
+// Function to load a random image
+function loadRandomImage(callback) {
   const TOTAL_IMAGE_COUNT = 12;
   const imageIndex = Math.ceil(Math.random() * TOTAL_IMAGE_COUNT);
   const filename = `images/image-${imageIndex}.jpg`;
-  const img = document.createElement("img");
+  const img = new Image();
   img.src = filename;
-  const imageContainer = document.querySelector("#image-container");
-  imageContainer.innerHTML = "";
-  imageContainer.appendChild(img);
-  pic = document.querySelector('#image-container img')
-  console.log(pic);
-
-  //dowload png from canvas on tab
-
-  //var png = ReImg.fromSvg(pic).downloadPng();
-  //var pngblack = ReImg.fromCanvas(document.getElementById('blackCanvas')).downloadPng();
-
-  /*
-  here is where you download the object, you can uncomment this when needed.
-  */
-
-  // if (recording !== null) {
-  //   downloadOBJ(recording, recordingImageIndex);
-  // }
-
-  // ctx.clearRect(0, 0, gazeCanvas.width, gazeCanvas.height);
-  // recordingImageIndex = imageIndex;
-  // recording = [];
-  // recordingStartTime = Date.now();
-
-  initializeBlackCanvas();
+  img.onload = () => {
+    const imageContainer = document.querySelector("#image-container");
+    imageContainer.innerHTML = "";
+    imageContainer.appendChild(img);
+    initializeBlackCanvas();
+    if (callback) callback(img, imageIndex);
+  };
+  img.onerror = () => {
+    console.error("Failed to load image");
+  };
 }
 
+// Initialize the black canvas
 function initializeBlackCanvas() {
   blackCanvas.width = window.innerWidth;
   blackCanvas.height = window.innerHeight;
   blackCtx.clearRect(0, 0, blackCanvas.width, blackCanvas.height);
+  blackCanvas.style.backgroundColor = 'transparent';
 }
 
 
-
-
-// Function to save the canvas as a PNG
-function saveCanvasAsPNG(canvas, filename) {
-  const link = document.createElement('a');
-  link.href = canvas.toDataURL('image/png');
-  link.download = filename;
-  link.click();
-}
-
-// Function to save the image element as a PNG
+// Save image element
 function saveImageAsPNG(imgElement, filename) {
-  const imgCanvas = document.createElement('canvas');
-  const imgCtx = imgCanvas.getContext('2d');
-  imgCanvas.width = imgElement.width;
-  imgCanvas.height = imgElement.height;
-  imgCtx.drawImage(imgElement, 0, 0);
   const link = document.createElement('a');
-  link.href = imgCanvas.toDataURL('image/png');
+  link.href = imgElement.src;
   link.download = filename;
   link.click();
 }
 
-//event listener for keypress (when you press spacebar i guess?)
+// Save canvas as PNG
+function saveCanvasAsPNG(canvas, filename) {
+  // Convert canvas to Blob object
+  canvas.toBlob(function(blob) {
+    // Create a link element
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+  }, 'image/png');
+}
+
+
+
+// Event listener for keypress (when you press spacebar)
 window.addEventListener("keypress", (event) => {
   console.log(event.key);
   if (event.key === " ") {
-    loadRandomImage();
+    loadRandomImage((imgElement, imageIndex) => {
+      // let blackCanvas = document.getElementById('blackCanvas');
+   
+      //saveCanvasAsPNG(blackCanvas, `black-canvas-${imageIndex}-${Date.now()}.png`);
+      saveImageAsPNG(imgElement, `random-image-${imageIndex}-${Date.now()}.png`);
+    });
+   let png = ReImg.fromCanvas(document.getElementById('blackCanvas')).downloadPng();
+      ReImg.fromCanvas(blackCanvas).downloadPng();
+
   }
   initializeBlackCanvas();
-
-  saveImageAsPNG(pic, "image")
 });
 
-//here we create the canvas where our images are placed..
+// Initialize the canvas where images are placed
 const gazeCanvas = document.getElementById("gaze-canvas");
 const ctx = gazeCanvas.getContext("2d");
 gazeCanvas.width = window.innerWidth;
@@ -108,7 +101,7 @@ gazeCanvas.height = window.innerHeight;
 
 // We add a second black canvas to create the erase effect
 const blackCanvas = document.getElementById("blackCanvas");
-const blackCtx = blackCanvas.getContext("2d");
+const blackCtx = blackCanvas.getContext('2d');
 initializeBlackCanvas();
 
 webgazer
@@ -130,15 +123,11 @@ webgazer
 
     prevX = x;
     prevY = y;
-
   })
   .begin();
 
-
-  
-
-//this is the part where we create the erase function
-const brushRadius = 30; // Adjust radius for softer effect
+// Adjust brush radius as needed
+const brushRadius = 30;
 
 function interpolateErase(x1, y1, x2, y2) {
   const dx = x2 - x1;
@@ -154,12 +143,11 @@ function interpolateErase(x1, y1, x2, y2) {
 }
 
 function smoothBrush(x, y) {
-  // Erase a circular area with a gradient - destination-out  - source-over
+  // Erase a circular area with a gradient destination-out, draw is source-over
   blackCtx.globalCompositeOperation = "source-over";
   const gradient = blackCtx.createRadialGradient(x, y, 0, x, y, brushRadius);
-
-  gradient.addColorStop(0, "rgba(0, 0, 0, 0.3)"); 
-  gradient.addColorStop(1, "rgba(0, 0, 0, 0)"); 
+  gradient.addColorStop(0, "rgba(255, 0, 0, 0.3)");
+  gradient.addColorStop(1, "rgba(255, 0, 0, 0)");
   blackCtx.fillStyle = gradient;
   blackCtx.beginPath();
   blackCtx.arc(x, y, brushRadius, 0, 2 * Math.PI);
@@ -170,28 +158,28 @@ function smoothBrush(x, y) {
 // livecam on canvas
 console.clear();
 ;(function(){
- 
+
 navigator.getUserMedia  = navigator.getUserMedia ||
                           navigator.webkitGetUserMedia ||
                           navigator.mozGetUserMedia ||
                           navigator.msGetUserMedia;
 
 if ( !navigator.getUserMedia ) { return false; }
-  
+
   var width = 0, height = 0;
-  
+
   var canvas = document.getElementById('livecam-canvas'),
       ctx = canvas.getContext('2d');
   document.body.appendChild(canvas);
-  
+
   var video = document.createElement('video'),
       track;
   video.setAttribute('autoplay',true);
-  
+
   window.vid = video;
-  
+
   function getWebcam(){ 
-  
+
     navigator.getUserMedia({ video: true, audio: false }, function(stream) {
       video.srcObject = stream;
       track = stream.getTracks()[0];
@@ -199,32 +187,32 @@ if ( !navigator.getUserMedia ) { return false; }
       console.error('Rejected!', e);
     });
   }
-  
+
   getWebcam();
-  
+
   var rotation = 0,
       loopFrame,
       centerX,
       centerY,
       twoPI = Math.PI * 2;
-  
+
   function loop(){
-    
+
     loopFrame = requestAnimationFrame(loop);
-    
+
     ctx.save();
-    
+
     ctx.globalAlpha = 0.1;
     ctx.drawImage(video, 0, 0, width, height);
-    
+
     ctx.restore();
 
   }
-  
+
   function startLoop(){ 
     loopFrame = loopFrame || requestAnimationFrame(loop);
   }
-  
+
   video.addEventListener('loadedmetadata',function(){
     width = canvas.width = video.videoWidth;
     height = canvas.height = video.videoHeight;
@@ -232,16 +220,15 @@ if ( !navigator.getUserMedia ) { return false; }
     centerY = height / 2;
     startLoop();
   });
-  
+
   canvas.addEventListener('click',function(){
     if ( track ) {
-      if ( track.stop ) { track.stop(); }
+      if ( track stop ) { track.stop(); }
       track = null;
     } else {
       getWebcam();
     }
   });
-  
-  
+
 })()
 */
