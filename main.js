@@ -78,16 +78,18 @@ function saveCanvasAsPNG(canvas, filename) {
 
 // Event listener for keypress (when you press spacebar)
 window.addEventListener("keypress", (event) => {
-  console.log(event.key);
-  if (event.key === " ") {
-    loadRandomImage((imgElement, imageIndex) => {
-   
-      saveImageAsPNG(imgElement, `random-image-${imageIndex}-${Date.now()}.png`);
-    });
-
+ if (event.key === " ") {
+    const imageContainer = document.querySelector("#image-container");
+    const currentImage = imageContainer.querySelector("img");
+    if (currentImage) {
+      saveImageAsPNG(currentImage, `random-image-${Date.now()}.png`);
+    }
     saveCanvasAsPNG(blackCanvas, `black-canvas-${Date.now()}.png`);
+    
+    loadRandomImage((imgElement, imageIndex) => {
+      initializeBlackCanvas(); // Initialize the black canvas after loading the new image
+    });
   }
-  initializeBlackCanvas();
 });
 
 // Initialize the canvas where images are placed
